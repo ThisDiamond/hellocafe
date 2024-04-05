@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,119 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  phone     String   @unique
+  password  String
+  balance   Int
+  roleId    Int
+  status    Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role     Role             @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orders   Order[]
+  products ProductInOrder[]
+  books    Book[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  price       Int
+  categoryId Int
+  status      Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category Category @relation(references: [id], fields: [categoryId], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  tableId     Int?
+  total_price Int      @default(0)
+  status      Int      @default(1)
+  createdAt   DateTime
+  updateAt    DateTime @updatedAt
+
+  user     User             @relation(references: [id], fields: [userId], onDelete: Cascade, onUpdate: Cascade)
+  table     Table?            @relation(references: [id], fields: [tableId], onDelete: SetNull, onUpdate: Cascade)
+  products ProductInOrder[]
+}
+
+model ProductInOrder {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  orderId      Int
+  product_name  String
+  product_price Int
+  count         Float
+  status        Int      @default(0)
+  total_price   Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user  User  @relation(references: [id], fields: [userId], onDelete: Cascade, onUpdate: Cascade)
+  order Order @relation(references: [id], fields: [orderId], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Zone {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tables Table[]
+}
+
+model Table {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  zoneId    Int
+  capacity  Int
+  status    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zone   Zone    @relation(fields: [zoneId], references: [id])
+  orders Order[]
+  books Book[]
+}
+
+model Book {
+  id        Int      @id @default(autoincrement())
+  tableId   Int?
+  userId    Int?
+  name      String
+  phone     String
+  date      DateTime
+  status    Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  table Table? @relation(references: [id], fields: [tableId], onUpdate: Cascade, onDelete: SetNull)
+  user  User?  @relation(references: [id], fields: [userId], onUpdate: Cascade, onDelete: SetNull)
 }
